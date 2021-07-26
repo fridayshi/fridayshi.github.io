@@ -4,26 +4,26 @@ title:  "记录下安装gitlab的坑"
 date:   2021-07-26 11:03:18 +0800
 categories: experience
 ---
-@[TOC](记录下安装gitlab的坑)
+(记录下安装gitlab的坑)
 
-# 怎么安装gitlab
+## 怎么安装gitlab
 
 首先是参考这篇文章https://www.jianshu.com/p/080a962c35b6，大致流程基本OK，主要说下安装遇到的坑。
 
-# 安装gitlab的坑
+## 安装gitlab的坑
 
-## 无法下载镜像的坑
+# 无法下载镜像的坑
 
 用上面那篇博文里面写的docker pull下载，我发现下载很慢，前前后后下载多次都下不了，baidu下可以修改类似Linux的更新源的东东，但是由于之前更新Ubuntu或者armbian系统的经验（很多国内的源库不全，并且有很多变化），就不是很想去改源，如果不改源又很慢，那只有加代理，但是坑爹的事情又来了，无论我通过export加代理或者是直接在系统里面添加还是在docker里面的config.json加，都没效果，又百度下，docker pull是作为一种服务，代理要加在服务里面。。。。。
 
-## 502的坑
+# 502的坑
 
 终于pull下来配置好，这时候战战兢兢的敲下dockers run 。。。。。把gitlab启动起来，再到网页上去刷，看到有响应了，嘿嘿，看来有希望，但是刷开之后是什么502 gitlab is taking too much time to response.....
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20201220140309277.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2ZyaWRheXNoaQ==,size_16,color_FFFFFF,t_70#pic_center)
 
 擦，还有问题啊，我赶紧进入log看了下，没看到error啊，重启了下，还是有这个问题，后面把整个机器都重启了下，还是有这个问题，这时候已经深夜，回头看灯火阑珊处的路上静寂无声（路上已经很少的车），又仔细思考下，我这台机器是台NCU，是不是这个502表示还在启动中啊，于是我就默默的等待了一会，再刷新，果然是这样的，哈哈
 
-## ssh和http的区别
+# ssh和http的区别
 
 之前一直没有搞懂ssh和http的区别，读了文章前面提到的博文才搞清楚，ssh的私钥是你的邮箱地址，公钥自己在本地根据私钥生成，生成后贴到gitlab里面，这时候就可以使用ssh了。
 
