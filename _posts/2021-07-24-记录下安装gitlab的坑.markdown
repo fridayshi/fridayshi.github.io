@@ -4,7 +4,7 @@ title:  "记录下安装gitlab的坑"
 date:   2021-07-26 11:03:18 +0800
 categories: experience
 ---
-(记录下安装gitlab的坑)
+[TOC](记录下安装gitlab的坑)
 
 ## 怎么安装gitlab
 
