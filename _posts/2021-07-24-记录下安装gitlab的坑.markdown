@@ -4,7 +4,7 @@ title:  "记录下安装gitlab的坑"
 date:   2021-07-26 11:03:18 +0800
 categories: experience
 ---
-[TOC](记录下安装gitlab的坑)
+[](记录下安装gitlab的坑)
 
 ## 怎么安装gitlab
 
@@ -19,6 +19,7 @@ categories: experience
 # 502的坑
 
 终于pull下来配置好，这时候战战兢兢的敲下dockers run 。。。。。把gitlab启动起来，再到网页上去刷，看到有响应了，嘿嘿，看来有希望，但是刷开之后是什么502 gitlab is taking too much time to response.....
+
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20201220140309277.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2ZyaWRheXNoaQ==,size_16,color_FFFFFF,t_70#pic_center)
 
 擦，还有问题啊，我赶紧进入log看了下，没看到error啊，重启了下，还是有这个问题，后面把整个机器都重启了下，还是有这个问题，这时候已经深夜，回头看灯火阑珊处的路上静寂无声（路上已经很少的车），又仔细思考下，我这台机器是台NCU，是不是这个502表示还在启动中啊，于是我就默默的等待了一会，再刷新，果然是这样的，哈哈
