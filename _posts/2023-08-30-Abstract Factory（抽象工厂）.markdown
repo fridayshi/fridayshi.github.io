@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "linux内核编程"
+title:  "Abstract Factory（抽象工厂）"
 date:   2023-08-30 22:35:00 +0800
 categories: code
 ---
