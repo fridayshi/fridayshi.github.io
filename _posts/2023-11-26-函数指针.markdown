@@ -1,0 +1,108 @@
+---
+layout: post
+title:  "函数指针"
+date:   2023-11-26 15:10:00 +0800
+categories: experience
+---
+1.简单的函数指针的应用
+形式1：返回类型(*函数名)(参数表)
+```
+char (*pFun)(int);  
+char glFun(int a){ return;}
+void main()
+{
+	pFun = glFun;
+	(*pFun)(2);
+}
+```
+         第一行定义了一个指针变量pFun。首先我们根据前面提到的“形式1”认识到它是一个指向某种函数的指针，这种函数参数是一个int型，返回值是char类型。只有第一句我们还无法使用这个指针，因为我们还未对它进行赋值。
+         第二行定义了一个函数glFun()。该函数正好是一个以int为参数返回char的函数。我们要从指针的层次上理解函数——函数的函数名实际上就是一个指针，函数名指向该函数的代码在内存中的首地址
+         然后就是main()函数了，它的第一句您应该看得懂了——它将函数glFun的地址赋值给变量pFun。main()函数的第二句中“*pFun”显然是取pFun所指向地址的内容，当然也就是取出了函数glFun()的内容，然后给定参数为2。
+2.使用typedef更直观更方便
+形式1：typedef  返回类型(*新类型)(参数表)
+```
+typedef char (*PTRFUN)(int);
+PTRFUN pFun;
+ char glFun(int a){ return;}
+ void main()
+ {
+	 pFun = glFun;
+	 (*pFun)(2);
+ }
+```
+            typedef的功能是定义新的类型。第一句就是定义了一种PTRFUN的类型，并定义这种类型为指向某种函数的指针，这种函数以一个int为参数并返回char类型。后面就可以像使用int,char一样使用PTRFUN了。
+           第二行的代码便使用这个新类型定义了变量pFun，此时就可以像使用形式1一样使用这个变量了。
+3.例子说明
+```C++
+#include <stdio.h>
+#include <assert.h>
+typedef int (*FP_CALC)(int,int);//定义一个函数指针类型
+int add(int a, int b)
+{
+ 	return a + b;
+}
+ 
+int sub(int a, int b)
+{ 
+	return a - b;
+}
+ 
+int mul(int a, int b)
+{
+	return a * b;
+}
+ 
+int div(int a, int b)
+{ 
+	return b ? a/b : -1;
+}
+```
+//定义一个函数，参数为op，返回一个指针,该指针类型为拥有两个int参数、
+//返回类型为int的函数指针。它的作用是根据操作符返回相应函数的地址
+```
+FP_CALC calc_func(char op)
+{
+	switch( op )
+	{
+ 		case '+':
+ 		    return add;
+ 		case '-':
+ 		    return sub;
+ 		case '*':
+ 		    return mul;
+ 		case '/':
+ 		    return div;
+ 		default:
+ 		    return NULL;
+ 	}
+return NULL;
+}
+```
+//s_calc_func为函数，它的参数是 op，
+ //返回值为一个拥有两个int参数、返回类型为int的函数指针
+```
+int (*s_calc_func(char op)) (int , int)
+{
+	return calc_func(op);
+}
+//最终用户直接调用的函数，该函数接收两个int整数，
+//和一个算术运算符，返回两数的运算结果
+int calc(int a, int b, char op)
+{
+ 	FP_CALC fp = calc_func(op);
+	int (*s_fp)(int,int) = s_calc_func(op);//用于测试
+	assert(fp == s_fp);// 可以断言这两个是相等的
+	if(fp)  
+		return fp(a,b);
+ 	else
+ 		return -1;
+}
+void main()
+{
+ 	int a = 100, b = 20;
+	printf("calc(%d, %d, %c) = %d\n", a, b, '+', calc(a, b, '+'));
+ 	printf("calc(%d, %d, %c) = %d\n", a, b, '-', calc(a, b, '-'));
+ 	printf("calc(%d, %d, %c) = %d\n", a, b, '*', calc(a, b, '*'));
+ 	printf("calc(%d, %d, %c) = %d\n", a, b, '/', calc(a, b, '/'));
+}
+```
