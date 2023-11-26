@@ -1,0 +1,82 @@
+---
+layout: post
+title:  "工厂模式"
+date:   2023-11-26 15:15:00 +0800
+categories: experience
+---
+当涉及到工厂模式在C++中的实现时，有几种常见的方式。下面是一个简单的示例，展示了如何使用工厂模式创建不同类型的产品对象：
+
+```cpp
+#include <iostream>
+
+// 抽象产品类
+class Product {
+public:
+    virtual void use() = 0;
+};
+
+// 具体产品类 A
+class ConcreteProductA : public Product {
+public:
+    void use() override {
+        std::cout << "Using ConcreteProductA" << std::endl;
+    }
+};
+
+// 具体产品类 B
+class ConcreteProductB : public Product {
+public:
+    void use() override {
+        std::cout << "Using ConcreteProductB" << std::endl;
+    }
+};
+
+// 抽象工厂类
+class Factory {
+public:
+    virtual Product* createProduct() = 0;
+};
+
+// 具体工厂类 A
+class ConcreteFactoryA : public Factory {
+public:
+    Product* createProduct() override {
+        return new ConcreteProductA();
+    }
+};
+
+// 具体工厂类 B
+class ConcreteFactoryB : public Factory {
+public:
+    Product* createProduct() override {
+        return new ConcreteProductB();
+    }
+};
+
+int main() {
+    // 使用具体工厂类 A 创建产品
+    Factory* factoryA = new ConcreteFactoryA();
+    Product* productA = factoryA->createProduct();
+    productA->use();
+
+    // 使用具体工厂类 B 创建产品
+    Factory* factoryB = new ConcreteFactoryB();
+    Product* productB = factoryB->createProduct();
+    productB->use();
+
+    delete factoryA;
+    delete productA;
+    delete factoryB;
+    delete productB;
+
+    return 0;
+}
+```
+
+在上述示例中，我们定义了一个抽象产品类 `Product`，它有一个纯虚函数 `use()`。然后，我们派生了两个具体产品类 `ConcreteProductA` 和 `ConcreteProductB`，它们分别实现了 `use()` 函数。
+
+接下来，我们定义了一个抽象工厂类 `Factory`，它有一个纯虚函数 `createProduct()`，用于创建产品对象。然后，我们派生了两个具体工厂类 `ConcreteFactoryA` 和 `ConcreteFactoryB`，它们分别实现了 `createProduct()` 函数，返回对应的产品对象。
+
+在 `main()` 函数中，我们可以使用具体工厂类来创建产品对象，并调用其 `use()` 函数来使用产品。
+
+这个示例展示了一个简单的工厂模式的实现，它可以根据具体工厂类的选择来创建不同类型的产品对象，实现了客户端代码与具体对象的解耦。

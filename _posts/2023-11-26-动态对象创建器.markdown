@@ -1,0 +1,80 @@
+---
+layout: post
+title:  "动态对象创建器"
+date:   2023-11-26 15:13:00 +0800
+categories: experience
+---
+动态对象创建器（Dynamic Object Creator）是一种设计模式，用于在运行时动态创建对象实例。它提供了一种灵活的方式来创建对象，而无需在编译时明确指定对象的具体类型。
+
+动态对象创建器通常使用工厂模式（Factory Pattern）来实现。工厂模式定义了一个公共的接口（通常是抽象类或接口），用于创建对象，并将具体的对象创建逻辑封装在工厂类中。通过使用工厂模式，可以将对象的创建与使用代码解耦，提供更高的灵活性和可扩展性。
+
+以下是一个示例，展示了如何使用动态对象创建器和工厂模式来创建对象：
+
+```cpp
+#include <iostream>
+
+// 抽象产品类
+class Product {
+public:
+    virtual void doSomething() = 0;
+};
+
+// 具体产品类 A
+class ConcreteProductA : public Product {
+public:
+    void doSomething() override {
+        std::cout << "ConcreteProductA does something." << std::endl;
+    }
+};
+
+// 具体产品类 B
+class ConcreteProductB : public Product {
+public:
+    void doSomething() override {
+        std::cout << "ConcreteProductB does something." << std::endl;
+    }
+};
+
+// 抽象工厂类
+class Factory {
+public:
+    virtual Product* createProduct() = 0;
+};
+
+// 具体工厂类 A
+class ConcreteFactoryA : public Factory {
+public:
+    Product* createProduct() override {
+        return new ConcreteProductA();
+    }
+};
+
+// 具体工厂类 B
+class ConcreteFactoryB : public Factory {
+public:
+    Product* createProduct() override {
+        return new ConcreteProductB();
+    }
+};
+
+int main() {
+    Factory* factoryA = new ConcreteFactoryA();
+    Product* productA = factoryA->createProduct();
+    productA->doSomething();
+
+    Factory* factoryB = new ConcreteFactoryB();
+    Product* productB = factoryB->createProduct();
+    productB->doSomething();
+
+    delete factoryA;
+    delete productA;
+    delete factoryB;
+    delete productB;
+
+    return 0;
+}
+```
+
+在上述示例中，抽象产品类 `Product` 定义了一个公共接口 `doSomething()`，具体的产品类 `ConcreteProductA` 和 `ConcreteProductB` 分别实现了该接口。抽象工厂类 `Factory` 定义了一个创建产品的接口 `createProduct()`，具体的工厂类 `ConcreteFactoryA` 和 `ConcreteFactoryB` 分别实现了该接口，并分别创建了 `ConcreteProductA` 和 `ConcreteProductB` 的实例。
+
+通过使用工厂模式，我们可以在运行时动态选择、创建具体的产品对象，而无需在编译时确定对象的具体类型。这种灵活性使得代码更易于扩展和维护，并支持更高的抽象层级。
