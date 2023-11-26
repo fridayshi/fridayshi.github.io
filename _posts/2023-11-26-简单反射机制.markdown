@@ -1,0 +1,311 @@
+---
+layout: post
+title:  "简单反射机制"
+date:   2023-11-26 15:09:00 +0800
+categories: experience
+---
+[](简单反射机制)
+
+C++ 通过模版工厂实现 简单反射机制
+
+我们知道Java/Python这种语言能够很好得 支持反射。反射机制 就是一种用户输入的字符串到对应实现方法的映射，比如http接口中 用户传入了url，我们需要调用该url对应的方法/函数对象 从而做出对应的操作。
+
+而C++ 并没有友好得支持这样的操作，而最近工作中需要通过C++实现http接口，这个过程想要代码实现得优雅一些，就需要实现这样的功能。
+
+最终的实现结果就是:
+```
+ int main() {
+  Initial();
+  JudgeName jm;
+  auto res = jm.Judge("Zhang");
+  res->ShowName();
+  return 0;
+}
+```
+我们只需要通过输入一个字符串，就能得到一个字符串对应的类的对象，从而调用该对象对应的方法。
+
+实现过程
+实现模版工厂
+反射机制本身是依赖工厂模式实现的，也就是提供一个创建函数对象的工厂，能够创建各种类型的函数对象。
+这里面的各种类型 – 其实就需要实现一个通用的模版工厂来达到创建各种类型的目的。
+
+// 工厂类模版，创建各种类型的类对象
+```
+template <class OperationType_t>
+class OperationFactory {
+public:
+  // 创建一个工厂单例，只会有一个对象工厂
+  static OperationFactory<OperationType_t>& Instance() {
+    static OperationFactory<OperationType_t> instance;
+    return instance;
+  }
+private:
+  // We don't allow to constructor, copy constructor and align constructor
+  OperationFactory() = default;
+  ~OperationFactory() = default;
+  
+  OperationFactory(const OperationFactory&) = delete;
+  const OperationFactory& operator= (const OperationFactory&) = delete;
+};
+```
+实现类的对象到类名的映射。
+我们实现了能够创建所有类对象的函数工厂，但是还需要将创建好的对象和他们的类名字对应起来，做一个映射。
+在模版工厂类中补充映射逻辑：
+```
+// Factory class template
+template <class OperationType_t>
+class OperationFactory {
+public:
+  // Single pattern of the factory
+  static OperationFactory<OperationType_t>& Instance() {
+    static OperationFactory<OperationType_t> instance;
+    return instance;
+  }
+  // 类名 和 类对象的映射
+  void RegisterOperation(const std::string& op_name,
+                OperationRegister<OperationType_t>* reg) {
+    operationRegister[op_name] = reg;
+  }
+  // 获取指定类名字 对应的 对象
+  // 也就是从映射map中查找
+  OperationType_t* GetOperation(
+                         const std::string& op_name) {
+    if (operationRegister.find(op_name) != operationRegister.end()) {
+      return operationRegister[op_name]->CreateOperation(op_name);
+    }
+    return nullptr;
+  }
+private:
+  // We don't allow to constructor, copy constructor and align constructor
+  OperationFactory() = default;
+  ~OperationFactory() = default;
+  OperationFactory(const OperationFactory&) = delete;
+  const OperationFactory& operator= (const OperationFactory&) = delete;
+  // 类名字 和 类对象之间的映射
+  std::map<std::string, OperationRegister<OperationType_t>* > operationRegister;
+};
+```
+实现一个注册类
+此时 我们通过这个注册类的入口 将类名 和类的对象完整映射起来。
+```
+template <class OperationType_t>
+class OperationRegister {
+public:
+  virtual OperationType_t* CreateOperation(const std::string& op_name) = 0;
+protected:
+  OperationRegister() {}
+  virtual ~OperationRegister() {}
+};
+// 注册一个以基类的子类对象。
+template <class OperationType_t, class OperationImpl_t>
+class OperationImplRegister : public OperationRegister<OperationType_t> {
+public:
+  // 获取一个基类的工厂
+  explicit OperationImplRegister(
+           const std::string& op_name) {
+    OperationFactory<OperationType_t>::Instance().RegisterOperation(op_name, this);
+  }
+  // 获取这个基类对应的子类对象
+  OperationType_t* CreateOperation(
+           const std::string& op_name) {
+    return new OperationImpl_t(op_name);
+  }
+};
+```
+应用
+有了上面的模版工厂 以及 注册类名字 和 类的映射模版，接下来我们看看怎么使用：
+
+我们实现了如下一个父类 以及 几个父类对应的子类实现
+```
+class Father {
+public:
+  virtual std::string Name() = 0;
+  virtual void ShowName() = 0;
+};
+class Wang : public Father{
+public:
+  Wang(const std::string& name) : name_(name){}
+  std::string Name() override { return name_; }
+  void ShowName() override { cout << "Name: " << name_ << endl; }
+private:
+  std::string name_;
+};
+class Zhang : public Father {
+public:
+  Zhang(const std::string& name) : name_(name) {}
+  std::string Name() override { return name_; }
+  void ShowName() override { cout << "Name: " << name_ << endl; }
+private:
+  std::string name_;
+};
+class Li : public Father {
+public:
+  Li(const std::string& name) : name_(name) {}
+  std::string Name() override { return name_; }
+  void ShowName() override { cout << "Name: " << name_ << endl; }
+private:
+  std::string name_;
+};
+```
+接下来需要统一注册一下这几个子类 的 名字 以及他们的对象：
+```
+// Construct the string name with there object's map
+void Initial() {
+  static bool init = false;
+  if (init == false) {
+    static OperationImplRegister<Father, Wang> wang("Wang");
+    static OperationImplRegister<Father, Zhang> zhang("Zhang");
+    static OperationImplRegister<Father, Li> li("Li");
+    init = true;
+  }
+}
+```
+最后就是一个通过字符串 获取对象
+```
+class JudgeName {
+public:
+  JudgeName(){}
+  Father* Judge(const std::string& name) {
+    OperationFactory<Father>& fac = OperationFactory<Father>::Instance();
+    return fac.GetOperation(name);
+  }
+};
+```
+这个类的函数中，我们用户只需要传入一个字符串，就能够得到这个字符串的类的对象，从而进行后续的对象方法相关的操作。
+
+能够极大得简化我们的if-else if 这样的分支代码，同时提升了代码的可扩展性。用户只需要继续补充想要使用的类，并将这个类的名字和对象注册到映射map中就好了，后续只需要使用类名就能够创建出这个类的对象。
+
+完整代码实现
+```
+#include <iostream>
+#include <map>
+
+using namespace std;
+
+// Register the operation
+// The 'OperationTyple_t' is the abstract class
+template <class OperationType_t>
+class OperationRegister {
+public:
+  virtual OperationType_t* CreateOperation(const std::string& op_name) = 0;
+
+protected:
+  OperationRegister() {}
+  virtual ~OperationRegister() {}
+};
+
+// Factory class template
+template <class OperationType_t>
+class OperationFactory {
+public:
+  // Single pattern of the factory
+  static OperationFactory<OperationType_t>& Instance() {
+    static OperationFactory<OperationType_t> instance;
+    return instance;
+  }
+  
+  void RegisterOperation(const std::string& op_name,
+                         OperationRegister<OperationType_t>* reg) {
+    operationRegister[op_name] = reg;
+  }
+  
+  OperationType_t* GetOperation(
+                         const std::string& op_name) {
+    if (operationRegister.find(op_name) != operationRegister.end()) {
+      return operationRegister[op_name]->CreateOperation(op_name);
+    }
+    
+    return nullptr;
+  }
+
+private:
+  // We don't allow to constructor, copy constructor and align constructor
+  OperationFactory() = default;
+  ~OperationFactory() = default;
+  
+  OperationFactory(const OperationFactory&) = delete;
+  const OperationFactory& operator= (const OperationFactory&) = delete;
+  
+  std::map<std::string, OperationRegister<OperationType_t>* > operationRegister;
+};
+
+// An template class to create the detail Operation
+template <class OperationType_t, class OperationImpl_t>
+class OperationImplRegister : public OperationRegister<OperationType_t> {
+public:
+  explicit OperationImplRegister(
+           const std::string& op_name) {
+    OperationFactory<OperationType_t>::Instance().RegisterOperation(op_name, this);
+  }
+  
+  OperationType_t* CreateOperation(
+           const std::string& op_name) {
+    return new OperationImpl_t(op_name);
+  }
+};
+
+class Father {
+public:
+  virtual std::string Name() = 0;
+  virtual void ShowName() = 0;
+};
+
+class Wang : public Father{
+public:
+  Wang(const std::string& name) : name_(name){}
+  std::string Name() override { return name_; }
+  void ShowName() override { cout << "Name: " << name_ << endl; }
+
+private:
+  std::string name_;
+};
+
+class Zhang : public Father {
+public:
+  Zhang(const std::string& name) : name_(name) {}
+  std::string Name() override { return name_; }
+  void ShowName() override { cout << "Name: " << name_ << endl; }
+
+private:
+  std::string name_;
+};
+
+class Li : public Father {
+public:
+  Li(const std::string& name) : name_(name) {}
+  std::string Name() override { return name_; }
+  void ShowName() override { cout << "Name: " << name_ << endl; }
+
+private:
+  std::string name_;
+};
+
+// Construct the string name with there object's map
+void Initial() {
+  static bool init = false;
+  
+  if (init == false) {
+    static OperationImplRegister<Father, Wang> wang("Wang");
+    static OperationImplRegister<Father, Zhang> zhang("Zhang");
+    static OperationImplRegister<Father, Li> li("Li");
+    init = true;
+  }
+}
+
+class JudgeName {
+public:
+  JudgeName(){}
+  Father* Judge(const std::string& name) {
+    OperationFactory<Father>& fac = OperationFactory<Father>::Instance();
+    return fac.GetOperation(name);
+  }
+};
+
+int main() {
+  Initial();
+  JudgeName jm;
+  auto res = jm.Judge("Zhang");
+  res->ShowName();
+  return 0;
+}
+```
